@@ -4,29 +4,29 @@ import math
 from ultralytics import YOLO
 import mediapipe as mp
 
-# Load YOLO model
+# โหลดโมเดล YOLO
 model = YOLO(r'C:\Users\lnwTutor\Desktop\DRYEYE D\best8xmAP93.pt')
 
-# Define class mapping
+# กำหนดการแมปคลาส
 class_mapping = {
     0: "ตาแห้ง",
     1: "ตาแห้ง",
     2: "ตาปกติ"
 }
 
-# Initialize MediaPipe Face Mesh
+# เริ่มต้น MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, min_detection_confidence=0.5)
 
-# Open webcam
+# เปิดกล้องเว็บแคม
 cap = cv2.VideoCapture(0)
 
-# Define pixel to mm ratio
-pixel_to_mm_ratio = 1 / 3  # 1 mm = 3 pixels
+# กำหนดอัตราส่วนพิกเซลเป็นมิลลิเมตร
+pixel_to_mm_ratio = 1 / 3  # 1 มม. = 3 พิกเซล
 
-print("Press 'c' to capture an image and analyze, 'q' to quit.")
+print("กด 'c' เพื่อจับภาพและวิเคราะห์, 'q' เพื่อออกจากโปรแกรม.")
 
-# Variables to store measurements
+# ตัวแปรเก็บการวัด
 right_eye_heights = []
 left_eye_heights = []
 num_captures = 3
@@ -34,27 +34,27 @@ capture_count = 0
 detections = []
 
 while True:
-    # Capture frame from webcam
+    # จับภาพจากกล้องเว็บแคม
     ret, frame = cap.read()
     if not ret:
-        print("Failed to capture image from webcam.")
+        print("ไม่สามารถจับภาพจากกล้องเว็บแคมได้.")
         break
 
-    # Display capture count on the frame
+    # แสดงจำนวนภาพที่จับได้บนเฟรม
     cv2.putText(frame, f"Captured Images: {capture_count}/{num_captures}", (10, 90),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-    # Display the live feed
+    # แสดงการถ่ายทอดสด
     cv2.imshow("Webcam - Press 'c' to capture, 'q' to quit", frame)
     key = cv2.waitKey(1) & 0xFF
 
     if key == ord('c') and capture_count < num_captures:
-        print(f"Capturing and analyzing image {capture_count + 1}...")
+        print(f"กำลังจับภาพและวิเคราะห์ภาพที่ {capture_count + 1}...")
 
-        # Perform YOLO inference
+        # ทำการทำนายผลด้วย YOLO
         results = model(frame)
 
-        # Process YOLO results
+        # ประมวลผลผลลัพธ์จาก YOLO
         for result in results:
             boxes = result.boxes
             for box in boxes:
@@ -62,33 +62,33 @@ while True:
                 conf = box.conf[0].item()
                 cls = int(box.cls[0].item())
 
-                # Map class
+                # แมปคลาส
                 class_name = class_mapping.get(cls, "Unknown")
-                print(f"Detected class: {class_name} with confidence {conf:.2f}")
+                print(f"ตรวจจับคลาส: {class_name} ด้วยความมั่นใจ {conf:.2f}")
 
-                # Store detection
+                # เก็บการตรวจจับ
                 detections.append({"class": class_name, "confidence": conf})
 
-                # Draw bounding box and label on frame
+                # วาดกรอบสี่เหลี่ยมและป้ายชื่อบนเฟรม
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
                 cv2.putText(frame, f'{class_name} {conf:.2f}', (int(x1), int(y1) - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-        # Convert frame to RGB for MediaPipe processing
+        # แปลงเฟรมเป็น RGB สำหรับการประมวลผล MediaPipe
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # Process frame with MediaPipe to get landmarks
+        # ประมวลผลเฟรมด้วย MediaPipe เพื่อรับตำแหน่งของจุด landmarks
         result = face_mesh.process(rgb_frame)
 
-        # If landmarks are detected, calculate eye heights
+        # หากมีการตรวจพบ landmarks, คำนวณความสูงของตา
         if result.multi_face_landmarks:
             for face_landmarks in result.multi_face_landmarks:
-                right_eye_top_index = 159  # Top edge of right eye
-                right_eye_bottom_index = 145  # Bottom edge of right eye
-                left_eye_top_index = 386  # Top edge of left eye
-                left_eye_bottom_index = 374  # Bottom edge of left eye
+                right_eye_top_index = 159  # ขอบด้านบนของตาขวา
+                right_eye_bottom_index = 145  # ขอบด้านล่างของตาขวา
+                left_eye_top_index = 386  # ขอบด้านบนของตาซ้าย
+                left_eye_bottom_index = 374  # ขอบด้านล่างของตาซ้าย
 
-                # Calculate eye coordinates
+                # คำนวณพิกัดของตา
                 right_eye_top = (int(face_landmarks.landmark[right_eye_top_index].x * frame.shape[1]),
                                  int(face_landmarks.landmark[right_eye_top_index].y * frame.shape[0]))
                 right_eye_bottom = (int(face_landmarks.landmark[right_eye_bottom_index].x * frame.shape[1]),
@@ -98,41 +98,41 @@ while True:
                 left_eye_bottom = (int(face_landmarks.landmark[left_eye_bottom_index].x * frame.shape[1]),
                                    int(face_landmarks.landmark[left_eye_bottom_index].y * frame.shape[0]))
 
-                # Calculate eye heights
+                # คำนวณความสูงของตา
                 right_eye_height_pixels = math.dist(right_eye_top, right_eye_bottom)
                 left_eye_height_pixels = math.dist(left_eye_top, left_eye_bottom)
 
-                # Convert heights from pixels to mm
+                # แปลงความสูงจากพิกเซลเป็นมิลลิเมตร
                 right_eye_height_mm = right_eye_height_pixels * pixel_to_mm_ratio
                 left_eye_height_mm = left_eye_height_pixels * pixel_to_mm_ratio
 
-                # Store eye heights
+                # เก็บความสูงของตา
                 right_eye_heights.append(right_eye_height_mm)
                 left_eye_heights.append(left_eye_height_mm)
 
-                # Draw eye edges
+                # วาดเส้นขอบของตา
                 cv2.line(frame, right_eye_top, right_eye_bottom, (0, 255, 0), 2)
                 cv2.line(frame, left_eye_top, left_eye_bottom, (0, 255, 0), 2)
 
-                # Display measurements on frame
+                # แสดงการวัดบนเฟรม
                 cv2.putText(frame, f"Right Eye Height: {right_eye_height_mm:.2f} mm", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
                 cv2.putText(frame, f"Left Eye Height: {left_eye_height_mm:.2f} mm", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
-        # Increment capture count
+        # เพิ่มจำนวนครั้งที่จับภาพ
         capture_count += 1
 
-        # Show the captured frame with detection results
+        # แสดงภาพที่จับได้พร้อมผลการตรวจจับ
         cv2.imshow("Captured Image", frame)
 
-        # Check if maximum captures reached
+        # ตรวจสอบว่าจับภาพครบตามจำนวนที่กำหนดหรือไม่
         if capture_count == num_captures:
-            print("Reached maximum captures. Analysis complete.")
+            print("จับภาพครบตามจำนวนแล้ว การวิเคราะห์เสร็จสมบูรณ์.")
 
-            # Calculate average heights
+            # คำนวณค่าเฉลี่ยของความสูง
             avg_right_eye_height = sum(right_eye_heights) / len(right_eye_heights)
             avg_left_eye_height = sum(left_eye_heights) / len(left_eye_heights)
 
-            # Calculate average confidence for each class
+            # คำนวณค่าเฉลี่ยของความมั่นใจสำหรับแต่ละคลาส
             avg_confidence = {}
             for detection in detections:
                 cls = detection["class"]
@@ -166,7 +166,7 @@ while True:
             print(f"ค่าเฉลี่ยความสูงของตาขวา: {avg_right_eye_height:.2f} mm")
             print(f"ค่าเฉลี่ยความสูงของตาซ้าย: {avg_left_eye_height:.2f} mm")
 
-            # Clear detections and reset capture count for next round
+            # เคลียร์การตรวจจับและรีเซ็ตการจับภาพสำหรับรอบถัดไป
             detections.clear()
             right_eye_heights.clear()
             left_eye_heights.clear()
@@ -175,6 +175,6 @@ while True:
     elif key == ord('q'):
         break
 
-# Release the capture and close windows
+# ปล่อยการจับภาพและปิดหน้าต่าง
 cap.release()
 cv2.destroyAllWindows()
