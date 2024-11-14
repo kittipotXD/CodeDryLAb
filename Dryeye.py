@@ -18,7 +18,7 @@ for filename in os.listdir(output_folder):
 
 # โหลดโมเดล YOLO เพียงครั้งเดียวก่อนเปิดกล้อง
 try:
-    model = YOLO(r'C:\Users\lnwTutor\Desktop\DRYEYE D\bestSize N mAP0.91.pt')
+    model = YOLO(r'C:\Users\lnwTutor\Desktop\DRYEYE D\bestSize X mAP0.93.pt')
 except Exception as e:
     print("ไม่สามารถโหลดโมเดลได้:", e)
     exit()
